@@ -2,7 +2,7 @@ import 'dart:io';
 
 void main() {
   var n = 5000;
-  for (var element in ['benchmark2_simd', 'benchmark3']) {
+  for (var element in ['benchmark2_simd', 'benchmark3', 'benchmark2']) {
     Process.runSync(
       'dart',
       ['compile', 'exe', 'bin/$element.dart'],
