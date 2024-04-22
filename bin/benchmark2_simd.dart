@@ -7,28 +7,36 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-double A(int i, int j) {
-  return ((j + i) * (i + j + 1) >> 1) + i + 1;
-}
-
 void main(List<String> args) {
   final n = args.isNotEmpty ? int.parse(args[0]) : 100;
   print(SpectralNorm(n).spectralNorm().toStringAsFixed(9));
+}
+
+final Float64x2 one = Float64x2(1, 1);
+final Float64x2 two = Float64x2(2, 2);
+
+Float64x2 A(Float64x2 i, Float64x2 j) {
+  final other = i + one;
+  return (i + j) * (j + other) / two + other;
 }
 
 class SpectralNorm {
   int n;
   SpectralNorm(int n) : n = n ~/ 2;
 
-  void Au(Float64x2List u, Float64x2List w) {
+  void au(Float64x2List u, Float64x2List w) {
     for (var i = 0; i < n; ++i) {
-      final i2 = i * 2;
+      final i2 = i * 2.0;
+      final i2x2 = Float64x2(i2, i2);
+      final i2x2plusOne = i2x2 + one;
       var t = Float64x2.zero();
       var t2 = Float64x2.zero();
       for (var j = 0; j < n; ++j) {
-        final j2 = j * 2;
-        t += u[j] / Float64x2(A(i2, j2), A(i2, j2 + 1));
-        t2 += u[j] / Float64x2(A(i2 + 1, j2), A(i2 + 1, j2 + 1));
+        final j2 = j * 2.0;
+        final j2x2 = Float64x2(j2, j2 + 1);
+        final u2 = u[j];
+        t += u2 / A(i2x2, j2x2);
+        t2 += u2 / A(i2x2plusOne, j2x2);
       }
       w[i] = Float64x2(t.x + t.y, t2.x + t2.y);
     }
@@ -36,20 +44,24 @@ class SpectralNorm {
 
   void atu(Float64x2List w, Float64x2List v) {
     for (var i = 0; i < n; ++i) {
-      final i2 = i * 2;
+      final i2 = i * 2.0;
+      final i2x2 = Float64x2(i2, i2);
+      final i2x2plusOne = i2x2 + one;
       var t = Float64x2.zero();
       var t2 = Float64x2.zero();
       for (var j = 0; j < n; ++j) {
-        final j2 = j * 2;
-        t += w[j] / Float64x2(A(j2, i2), A(j2 + 1, i2));
-        t2 += w[j] / Float64x2(A(j2, i2 + 1), A(j2 + 1, i2 + 1));
+        final j2 = j * 2.0;
+        final j2x2 = Float64x2(j2, j2 + 1);
+        final w2 = w[j];
+        t += w2 / A(j2x2, i2x2);
+        t2 += w2 / A(j2x2, i2x2plusOne);
       }
       v[i] = Float64x2(t.x + t.y, t2.x + t2.y);
     }
   }
 
-  void AtAu(Float64x2List u, Float64x2List v, Float64x2List w) {
-    Au(u, w);
+  void atAu(Float64x2List u, Float64x2List v, Float64x2List w) {
+    au(u, w);
     atu(w, v);
   }
 
@@ -61,8 +73,8 @@ class SpectralNorm {
         vBv = Float64x2.zero();
 
     for (var i = 0; i < 10; ++i) {
-      AtAu(u, v, w);
-      AtAu(v, u, w);
+      atAu(u, v, w);
+      atAu(v, u, w);
     }
     for (var i = 0; i < n; ++i) {
       vBv += u[i] * v[i];

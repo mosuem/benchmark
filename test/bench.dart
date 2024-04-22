@@ -1,7 +1,7 @@
 import 'dart:io';
 
 void main() {
-  var n = 5000;
+  var n = 10000;
   for (var element in ['benchmark2_simd', 'benchmark3', 'benchmark2']) {
     Process.runSync(
       'dart',
@@ -13,6 +13,6 @@ void main() {
       ['./bin/$element.exe', n.toString()],
       workingDirectory: '/home/mosum/projects/fun/benchmark/',
     );
-    print('$element: ${runSync.stderr}');
+    print('$element: ${runSync.stdout} ${runSync.stderr}');
   }
 }
